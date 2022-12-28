@@ -1,0 +1,20 @@
+1. Namespaces
+    
+
+2. Cluster Management
+
+3. Object Management
+
+4. Pods and Containers
+
+5. Advanced Pod Allocation
+
+6. Deployments
+
+7. Networking
+
+8. Services
+
+9. Storage
+
+10. Troubleshooting
