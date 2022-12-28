@@ -1,7 +1,165 @@
 1. Namespaces
-    
+    List all existing namespaces
+        kubectl get namespaces
+    List all pods in a specific namespaces
+        kubectl get pods --namespace namespace-namespace
+    List all pods in all namespaces
+        kubectl get pods --all-namespaces
+    Create a new namespace
+        kubectl create namespace name-of-namespace
+    Delete the new namespace
+        kubectl delete namespace name-of-namespace
 
 2. Cluster Management
+    High Availability Intro
+        etcd definition
+            etcd (pronounced et-see-dee) is an open source, distributed, consistent key-value store for shared configuration, service discovery, and scheduler coordination of distributed systems or clusters of machines
+        Stacked etcd
+            etcd runs on the same nodes as the rest of the control-plane components.
+            this is used by default when you set up with kubeadm
+        External etcd
+            etcd runs on seperate nodes
+    Kubernetes Management Tools
+        kubectl
+            Official command line interface for K8s
+        kubeadm
+            Tool for quickly creating k8s clusters
+        minikube
+            Allows you to automatically set up a local single node cluster.
+        Helm
+            Provides templating and package management for K8s Objects
+        Kompose
+            Helps you translate Docker compose files into K8s Objects
+        Kustomize
+            Config management tool for managing K8s object configs
+    Safely Draining a K8s node
+        What is draining?
+            We need to remove a node from service for maintanence sometimes.
+            To do this, we need to "drain" the node, which moves any work that node is doing to other nodes.
+        What command do you use to drain a node?
+            kubectl drain <node name>
+        What is a daemon set?
+            These are pods tied specifically to a particular node.
+        How do you drain a daemon set node?
+            kubectl drain <node name> --ignore-daemonsets
+        How to you allow the node to run pods again?
+            kubectl uncordon <node name>
+        Practice
+            Create some pods and containers for examples
+                vim pod.yml
+                    apiVersion: v1
+                    kind: Pod
+                    metadata:
+                        name: my-pod
+                    spec:
+                        containers:
+                        - name: nginx
+                          image: nginx:1.14.2
+                          ports:
+                          - containerPort: 80
+                        restartPolicy: OnFailure
+                kubectl apply -f pod.yml
+                vim deployment.yml
+                    apiVersion: apps/v1
+                    kind: Deployment
+                    metadata:
+                        name: my-deployment
+                        labels:
+                            app: my-deployment
+                    spec:
+                        replicas: 4
+                        selector:
+                            matchLabels:
+                                app: my-deployment
+                        template:
+                            metadata:
+                                labels:
+                                    app: my-deployment
+                            spec:
+                                containers:
+                                - name: nginx
+                                  image: nginx:1.14.2
+                                  ports:
+                                  - containerPort: 80
+                kubectl apply -f deployment.yml
+            List all pods in a wide format
+                kubectl get pods -o wide
+            Drain a node where my-pod is running
+                kubectl drain <node-name>
+            Drain it again ignoring the daemonsets and force it
+                kubectl drain --ignore-daemonsets --force
+                NOTE: Force will delete the pod, don't do this if you need it back.
+            List the pods again like earlier to see how the nodes reacted
+                kubectl get pods -o wide
+            List the nodes and see what their statuses are
+                kubectl get nodes
+            Uncordon the drained node to let it be ready again
+                kubectl uncordon <node-name>
+                Note that this doesnt rebalance the pods, but makes the node available again.
+            Delete the deployment to clean things up
+                kubectl delete deployment my-deployment
+    Upgrading with kubeadm
+        Control plane
+            Drain the control node
+                kubectl drain <node> --ignore-daemonsets
+            Upgrade kubeadm on control node
+                check the version of kubeadm    
+                    kubeadm version
+                sudo yum update && sudo yum install -y kubeadm=1.22.2-00
+            Plan the Upgrade
+                sudo kubeadm upgrade plan v.1.22.2
+            Apply the Upgrade
+                sudo kubeadm upgrade apply v1.22.2
+            Upgrade kubelet and kubectl
+                sudo yum update && sudo yum install -y kubelet=1.22.2-00 kubectl=1.22.2-00
+                sudo systemctl daemon-reload
+                Sudo systemctl restart kubelet
+            uncordon the control plane node
+                kubectl uncordon <node>
+        Worker nodes - Do this for each one
+            Drain the node - must be done from control node
+                kubectl drain <node> --ignore-daemonsets --force
+            upgrade kubeadm
+                sudo yum update && sudo yum install -y kubeadm=1.22.2-00
+            upgrade kubelet configs
+                sudo kubeadm upgrade node
+            upgrade kubelet and kubectl
+                sudo yum update && sudo yum install -y kubelet=1.22.2-00 kubectl=1.22.2-00
+                sudo systemctl daemon-reload
+                sudo systemctl restart kubelet
+            uncordon the node
+                On the control-plane node
+                kubectl uncordon <node>
+    etcd backup and restore
+        etcd stores all your cluster data for K8s objects, apps, configs, etc
+        Backing up etcd
+            Get the cluster name
+                ETCDCTL_API=3 etcdctl get cluster.name \
+                --endpoints=https://ipaddress:2379 \
+                --cacert=/home/cloud_user/etcd-certs/etcd-ca.pem \
+                --cert=/home/cloud_user/etcd-certs/etcd-server.crt \
+                --key=/home/cloud_user/etcd-certs/etcd-server.key
+            Perform the back to a file
+                ETCDCTL_API=3 etcdctl snapshot save /path/to/backup.db \
+                --endpoints=https://ipaddress:2379 \
+                --cacert=/home/cloud_user/etcd-certs/etcd-ca.pem \
+                --cert=/home/cloud_user/etcd-certs/etcd-server.crt \
+                --key=/home/cloud_user/etcd-certs/etcd-server.key
+        Restoring etcd
+            Reset etcd data to clear out the data   
+                sudo systemctl stop etcd
+                sudo rm -rf /var/lib/etcd
+            Restore from backup - This creates a temporary cluster to perform the restore
+                sudo ETCDCTL_API=3 etcdctl snapshot restore /path/to/backup.db \
+                --initial-cluster etcd-restore=https://ipaddress:2380 \
+                --initial-advertise-peer-urls https://ipaddress:2380 \
+                --name etcd-restore \
+                --data-dir /var/lib/etcd
+            Make sure the etcd folder permissions are good
+                sudo chown -R etcd:etcd /var/lib/etcd
+            Start etcd  
+                sudo systemctl start etcd
+            Get the cluster name again to make sure it worked.
 
 3. Object Management
 
