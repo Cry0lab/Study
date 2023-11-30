@@ -89,8 +89,69 @@ Update OpenShift
 Linux Academy
 
 Installation
+    
 
 Manage OpenShift Conatiner Platform
+    Show the CLI help
+        oc help
+    Create and Delete projects
+        What is a project?
+            Allows a group or community of users to manage their content away from others. Can have 
+            pretty much any resource: Pods, DBs, secrets, service accounts, etc
+        Create 2 projects with description and display name
+            oc new-project <project-name> --description="<description>" --display-name="<dispay_name>"
+        View all projects  
+            oc get projects
+        View your current project
+            oc project
+        Move into a specific project
+            oc project <project_name>
+        Create a simple app with the example given at creation
+            oc new-app <stuff>
+        List all the pods for this project
+            oc get pods
+        List all resources in one project
+            oc get all
+        Delete the project
+            oc delete project <project_name>
+        Create and Delete in GUI
+            Bruh
+    Import,Export, and Configure K8s resources
+        Export resources to a yaml file
+            oc get -o yaml <resource> > <resource>.yaml
+        Export resources to a json file
+            oc get -o json <resource> > <resource>.json
+        Replace that resource with the file you made
+            oc replace -f pod.yaml
+        Extract a secret from the app
+            oc get secrets
+            oc extract secret/<secret-name>
+        *Create a resource from a yaml file in a new project
+            oc create -f <resource>.yaml
+    Examine Resources and Cluster status
+        List the nodes and there current resource consumption
+            oc adm top node
+        Do the same for a specific node
+            oc adm top node <node name>
+        List the pods and their current resource consumption
+            oc adm top pod
+    View logs
+        Tail the logs of the most recent build config
+            oc get buildconfig
+            oc logs -f bc/<buildconfig_name>
+        Do the same for deployments
+            oc logs -f dc/<deploymentconfig_name>
+        Tail logs of the first deployment
+            oc logs --version=1 dc\<deploymentconfig_name>
+        Tail logs of a pod
+            oc logs -f pod/<pod_name>
+        View the last 5 log entries for a pod
+            oc logs -f pod/<pod_name> --tail=5
+    Monitor Cluster Events and alerts
+        View events in a project
+            oc get events -n <project_name>
+        
+        
 
 Manage Users and policies
 
